@@ -4,10 +4,12 @@ import { useTokens } from '@/hooks/useTokens'
 import { TokenColumn } from './TokenColumn'
 import { FilterPanel } from './FilterPanel'
 import { Skeleton } from '@/components/ui/skeleton'
+import { cn } from '@/lib/utils'
 
 export function TokenDiscovery() {
   const { data, isLoading, isError, error, refetch } = useTokens()
   const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<'new' | 'final' | 'migrated'>('new')
   const [liveData, setLiveData] = useState<Record<string, { price: number; volume: number; marketCap: number; fees: number; txCount: number }>>({})
 
   const handleUpdateLiveData = useCallback((id: string, newData: { price: number; volume: number; marketCap: number; fees: number; txCount: number }) => {
@@ -23,10 +25,46 @@ export function TokenDiscovery() {
 
   return (
     <section>
+      {/* Tab switching for small screens */}
+      <div className="md:hidden mb-4 flex gap-2 border-b border-neutral-800">
+        <button
+          onClick={() => setActiveTab('new')}
+          className={cn(
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+            activeTab === 'new'
+              ? "text-white border-white"
+              : "text-neutral-400 border-transparent hover:text-white"
+          )}
+        >
+          New Pairs
+        </button>
+        <button
+          onClick={() => setActiveTab('final')}
+          className={cn(
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+            activeTab === 'final'
+              ? "text-white border-white"
+              : "text-neutral-400 border-transparent hover:text-white"
+          )}
+        >
+          Final Stretch
+        </button>
+        <button
+          onClick={() => setActiveTab('migrated')}
+          className={cn(
+            "px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px",
+            activeTab === 'migrated'
+              ? "text-white border-white"
+              : "text-neutral-400 border-transparent hover:text-white"
+          )}
+        >
+          Migrated
+        </button>
+      </div>
 
       {/* Three Columns Layout */}
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="space-y-2">
               <div className="sticky top-0 z-10 bg-neutral-950 border-b border-neutral-800 pb-2 mb-2">
@@ -78,25 +116,41 @@ export function TokenDiscovery() {
       )}
 
       {!isLoading && !isError && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <TokenColumn
-            category="new"
-            tokens={newPairs}
-            liveData={liveData}
-            onUpdateLiveData={handleUpdateLiveData}
-          />
-          <TokenColumn
-            category="final"
-            tokens={finalStretch}
-            liveData={liveData}
-            onUpdateLiveData={handleUpdateLiveData}
-          />
-          <TokenColumn
-            category="migrated"
-            tokens={migrated}
-            liveData={liveData}
-            onUpdateLiveData={handleUpdateLiveData}
-          />
+        <div className={cn(
+          "grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4",
+          "md:px-0 px-0" // Reduced padding on large screens
+        )}>
+          {/* Desktop: Show all columns, Mobile: Show only active tab */}
+          <div className={cn(
+            activeTab === 'new' ? "block" : "hidden md:block"
+          )}>
+            <TokenColumn
+              category="new"
+              tokens={newPairs}
+              liveData={liveData}
+              onUpdateLiveData={handleUpdateLiveData}
+            />
+          </div>
+          <div className={cn(
+            activeTab === 'final' ? "block" : "hidden md:block"
+          )}>
+            <TokenColumn
+              category="final"
+              tokens={finalStretch}
+              liveData={liveData}
+              onUpdateLiveData={handleUpdateLiveData}
+            />
+          </div>
+          <div className={cn(
+            activeTab === 'migrated' ? "block" : "hidden md:block"
+          )}>
+            <TokenColumn
+              category="migrated"
+              tokens={migrated}
+              liveData={liveData}
+              onUpdateLiveData={handleUpdateLiveData}
+            />
+          </div>
         </div>
       )}
 

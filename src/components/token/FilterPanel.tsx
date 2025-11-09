@@ -1,14 +1,22 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface FilterPanelProps {
   isOpen: boolean
   onClose: () => void
+  category?: 'new' | 'final' | 'migrated'
 }
 
-export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
-  const [activeTab, setActiveTab] = useState<'new' | 'final' | 'migrated'>('new')
+export function FilterPanel({ isOpen, onClose, category }: FilterPanelProps) {
+  const [activeTab, setActiveTab] = useState<'new' | 'final' | 'migrated'>(category || 'new')
+  
+  // Update activeTab when category changes
+  useEffect(() => {
+    if (category) {
+      setActiveTab(category)
+    }
+  }, [category])
   const [selectedProtocols, setSelectedProtocols] = useState<string[]>(['Pump', 'Moonshot', 'Candle', 'Jupiter Studio', 'LaunchLab', 'Meteora AMM', 'Orca'])
   const [selectedQuoteTokens, setSelectedQuoteTokens] = useState<string[]>(['SOL', 'USDC'])
 
@@ -59,9 +67,9 @@ export function FilterPanel({ isOpen, onClose }: FilterPanelProps) {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-96 bg-neutral-900 border-r border-neutral-800 overflow-y-auto">
+      <div className="relative w-full max-w-2xl max-h-[90vh] bg-neutral-900 border border-neutral-800 rounded-lg overflow-y-auto shadow-2xl">
         <div className="sticky top-0 bg-neutral-900 border-b border-neutral-800 p-4 z-10">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Filters</h2>
