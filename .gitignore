@@ -1,0 +1,13 @@
+node_modules
+.env
+dist
+coverage
+.DS_Store
+.vscode
+.idea
+npm-debug.log
+yarn-error.log
+*.log
+*.tsbuildinfo
+/build
+/out
