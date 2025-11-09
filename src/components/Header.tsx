@@ -72,7 +72,7 @@ export function Header() {
                 placeholder="Search by token or CA..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3 py-1.5 w-64 text-sm bg-neutral-900 border border-neutral-800 rounded-md text-white placeholder-neutral-500 focus:outline-none focus:border-[#6366f1]"
+                className="pl-9 pr-3 py-1.5 w-64 text-sm bg-neutral-900 border border-neutral-800 rounded-lg text-white placeholder-neutral-500 focus:outline-none focus:border-[#6366f1]"
               />
               <span className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-xs text-neutral-500">/</span>
             </div>
@@ -91,7 +91,7 @@ export function Header() {
             </div>
 
             {/* Deposit Button */}
-            <button className="px-4 py-1.5 text-sm font-medium bg-[#6366f1] text-white rounded-md hover:bg-[#4f46e5] transition-colors">
+            <button className="px-4 py-1.5 text-sm font-medium bg-[#6366f1] text-white rounded-lg hover:bg-[#4f46e5] transition-colors">
               Deposit
             </button>
 

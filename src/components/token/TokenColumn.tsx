@@ -1,11 +1,13 @@
 "use client"
-import { useEffect, useRef, useState, memo } from 'react'
+import { useEffect, useRef, useState, memo, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { TokenRow } from '@/lib/types'
 import { MockPriceSocket } from '@/lib/mockSocket'
 import { cn, formatCurrency, formatPercent, ageToString } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { FilterPanel } from './FilterPanel'
+import { useAppDispatch, useAppSelector } from '@/components/token/hooks'
+import { setSort, SortKey } from '@/store/tableSlice'
 
 interface TokenColumnProps {
   category: 'new' | 'final' | 'migrated'
@@ -66,12 +68,58 @@ export const TokenColumn = memo(function TokenColumn({ category, tokens, liveDat
 
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState<'P1' | 'P2' | 'P3'>('P1')
+  const dispatch = useAppDispatch()
+  const { sortKey, sortOrder } = useAppSelector((state) => state.table)
 
   const outlineColor = {
     new: 'border-green-500',
     final: 'border-[#6366f1]',
     migrated: 'border-yellow-500'
   }[category]
+
+  // Sort tokens based on Redux state
+  const sortedTokens = useMemo(() => {
+    const sorted = [...tokens]
+    sorted.sort((a, b) => {
+      let aValue: number
+      let bValue: number
+
+      switch (sortKey) {
+        case 'price':
+          aValue = liveData[a.id]?.price ?? a.price
+          bValue = liveData[b.id]?.price ?? b.price
+          break
+        case 'change':
+          aValue = a.change24h
+          bValue = b.change24h
+          break
+        case 'volume':
+          aValue = liveData[a.id]?.volume ?? a.volume24h
+          bValue = liveData[b.id]?.volume ?? b.volume24h
+          break
+        case 'marketCap':
+          aValue = liveData[a.id]?.marketCap ?? a.marketCap
+          bValue = liveData[b.id]?.marketCap ?? b.marketCap
+          break
+        case 'age':
+          aValue = a.ageMinutes
+          bValue = b.ageMinutes
+          break
+        default:
+          return 0
+      }
+
+      if (sortOrder === 'asc') {
+        return aValue - bValue
+      }
+      return bValue - aValue
+    })
+    return sorted
+  }, [tokens, liveData, sortKey, sortOrder])
+
+  const handleSort = (key: SortKey) => {
+    dispatch(setSort({ key }))
+  }
 
   return (
     <div className="flex-1 min-w-0 relative">
@@ -100,13 +148,25 @@ export const TokenColumn = memo(function TokenColumn({ category, tokens, liveDat
               <circle cx="7" cy="9" r="1" fill="currentColor"/>
             </svg>
           </button>
-          <div className="flex items-center gap-2 text-xs text-neutral-400 ml-auto">
+          <button
+            onClick={() => handleSort('price')}
+            className={cn(
+              "text-neutral-400 hover:text-white transition-colors ml-auto",
+              sortKey === 'price' && "text-[#6366f1]"
+            )}
+            aria-label="Sort by Price"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 2V10M6 2L4 4M6 2L8 4M6 10L4 8M6 10L8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className="flex items-center gap-2 text-xs text-neutral-400">
             <span>{tokens.length}</span>
             <button
               onClick={() => setSelectedPreset('P1')}
               className={cn(
                 "px-1.5 py-0.5 rounded transition-colors",
-                selectedPreset === 'P1' ? "bg-blue-600 text-white" : "hover:text-white"
+                selectedPreset === 'P1' ? "bg-[#6366f1] text-white" : "hover:text-white"
               )}
             >
               P1
@@ -115,7 +175,7 @@ export const TokenColumn = memo(function TokenColumn({ category, tokens, liveDat
               onClick={() => setSelectedPreset('P2')}
               className={cn(
                 "px-1.5 py-0.5 rounded transition-colors",
-                selectedPreset === 'P2' ? "bg-blue-600 text-white" : "hover:text-white"
+                selectedPreset === 'P2' ? "bg-[#6366f1] text-white" : "hover:text-white"
               )}
             >
               P2
@@ -124,7 +184,7 @@ export const TokenColumn = memo(function TokenColumn({ category, tokens, liveDat
               onClick={() => setSelectedPreset('P3')}
               className={cn(
                 "px-1.5 py-0.5 rounded transition-colors",
-                selectedPreset === 'P3' ? "bg-blue-600 text-white" : "hover:text-white"
+                selectedPreset === 'P3' ? "bg-[#6366f1] text-white" : "hover:text-white"
               )}
             >
               P3
@@ -133,7 +193,7 @@ export const TokenColumn = memo(function TokenColumn({ category, tokens, liveDat
         </div>
       </div>
       <div className="space-y-2 relative">
-        {tokens.map((token) => (
+        {sortedTokens.map((token) => (
           <TokenCard 
             key={token.id} 
             token={token} 
@@ -239,7 +299,7 @@ const TokenCard = memo(function TokenCard({
             e.stopPropagation()
             setIsPfpHovered(false)
             // Check if mouse is still over the card
-            if (cardRef.current && cardRef.current.contains(e.relatedTarget as Node)) {
+            if (cardRef.current && e.relatedTarget instanceof Node && cardRef.current.contains(e.relatedTarget)) {
               setIsCardHovered(true)
             }
           }}
@@ -393,9 +453,9 @@ const TokenCard = memo(function TokenCard({
         </div>
       </div>
 
-      {/* Hover text display on card (not PFP) - centered */}
+      {/* Hover text display on card (not PFP) - centered at top */}
       {isCardHovered && !isPfpHovered && (
-        <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+        <div className="absolute inset-x-0 top-2 flex items-center justify-center z-10 pointer-events-none">
           <div className={cn(
             "text-sm font-medium px-3 py-1.5 rounded-md bg-neutral-900/95 backdrop-blur-sm border",
             category === 'new' && bondingPercentage !== 0 && (
